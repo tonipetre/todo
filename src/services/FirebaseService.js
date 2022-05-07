@@ -34,7 +34,6 @@ export default {
     //       console.log(querySnapshot.data());
     //       const docData = querySnapshot.data();
     //       console.log(JSON.stringify(docData));
-
     //       todos = docData.docs.map((doc) => {
     //         return {
     //           id: doc.id,
@@ -43,35 +42,20 @@ export default {
     //       });
     //     }
     //   });
-
     //   return { listenToUpdatesUnsubscribe, todos };
     // }
-    const q = query(collection(db, "todos"));
-
-    let todos = [];
-    let listenToUpdatesUnsubscribe = onSnapshot(q, (querySnapshot) => {
-      const todo = querySnapshot.docs.map((doc) => {
-        return {
-          id: doc.id,
-          ...doc.data(),
-        };
-      });
-      // todo.forEach((doc) => {
-      //   todos.push(doc);
-      // });
-      // todos = [...todo];
-      // todos.push(querySnapshot.docs);
-      // console.log("todo", todo);
-      // const docData = querySnapshot.data();
-      // console.log("querySnapshot", querySnapshot);
-      todo.forEach((doc) => {
-        todos.push(doc);
-      });
-    });
-
-    console.log("todos", todos);
-
-    return { todos };
+    // const q = query(collection(db, "todos"));
+    // let todos = [];
+    // let listenToUpdatesUnsubscribe = onSnapshot(q, (querySnapshot) => {
+    //   const data = querySnapshot.docs.map((doc) => {
+    //     return {
+    //       id: doc.id,
+    //       ...doc.data(),
+    //     };
+    //   });
+    // });
+    // console.log("todos", todos);
+    // return { todos };
   },
   getFirstBatch: async function (user) {
     console.log(user);

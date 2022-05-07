@@ -7,6 +7,16 @@ import { useNavigate } from "react-router-dom";
 import { auth } from "../../utils/firebase";
 import { logout } from "../../services/FirebaseAuth";
 
+import {
+  collection,
+  onSnapshot,
+  query,
+  where,
+  orderBy,
+} from "firebase/firestore";
+import { db } from "../../utils/firebase";
+import { COLLECTION_REF } from "../../services/Constants";
+
 function Dashboard() {
   const [todos, setTodos] = useState([]);
   const [input, setInput] = useState("");
@@ -33,34 +43,56 @@ function Dashboard() {
   //     });
   // }, [user, loading]);
 
+  // useEffect(() => {
+  //   if (loading) return;
+  //   FirebaseService.listenToUpdates(user)
+  //     .then((res) => {
+  //       console.log("res", res.todos);
+  //       setTodos(res.todos);
+  //       // setLastDocument(res.lastDocument);
+  //     })
+  //     .catch((err) => {
+  //       console.log(err);
+  //     });
+  // }, [user, loading]);
+
   useEffect(() => {
     if (loading) return;
-    FirebaseService.listenToUpdates(user)
-      .then((res) => {
-        console.log("res", res.todos);
-        setTodos(res.todos);
-        // setLastDocument(res.lastDocument);
-      })
-      .catch((err) => {
-        console.log(err);
+
+    const q = query(
+      COLLECTION_REF,
+      where("author", "==", user.uid),
+      orderBy("createdAt", "desc")
+    );
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const data = querySnapshot.docs.map((doc) => {
+        return {
+          id: doc.id,
+          ...doc.data(),
+        };
       });
+      setTodos(data);
+    });
+
+    return () => unsubscribe();
   }, [user, loading]);
 
-  const fetchMorePosts = () => {
-    if (lastDocument) {
-      setNextPostsLoading(true);
-      FirebaseService.getNextBatch(lastDocument, user)
-        .then((res) => {
-          setLastDocument(res.lastDocument);
-          setTodos([...todos, ...res.todos]);
-          setNextPostsLoading(false);
-        })
-        .catch((err) => {
-          console.log(err);
-          setNextPostsLoading(false);
-        });
-    }
-  };
+  // const fetchMorePosts = () => {
+  //   if (lastDocument) {
+  //     setNextPostsLoading(true);
+  //     FirebaseService.getNextBatch(lastDocument, user)
+  //       .then((res) => {
+  //         setLastDocument(res.lastDocument);
+  //         setTodos([...todos, ...res.todos]);
+  //         setNextPostsLoading(false);
+  //       })
+  //       .catch((err) => {
+  //         console.log(err);
+  //         setNextPostsLoading(false);
+  //       });
+  //   }
+  // };
 
   const handleAddTodo = (event) => {
     event.preventDefault();
@@ -218,7 +250,7 @@ function Dashboard() {
         </button>
       </form>
       <div>{allPosts}</div>
-      <div style={{ textAlign: "center" }}>
+      {/* <div style={{ textAlign: "center" }}>
         {nextPosts_loading ? (
           <p>Loading..</p>
         ) : lastDocument ? (
@@ -226,7 +258,7 @@ function Dashboard() {
         ) : (
           <span>You are up to date!</span>
         )}
-      </div>
+      </div> */}
     </div>
   );
 }
