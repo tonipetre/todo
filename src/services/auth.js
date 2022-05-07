@@ -1,32 +1,17 @@
 import {
   GoogleAuthProvider,
-  getAuth,
   signInWithPopup,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
   signOut,
 } from "firebase/auth";
-import {
-  collection,
-  onSnapshot,
-  doc,
-  getDoc,
-  getDocs,
-  setDoc,
-  addDoc,
-  query,
-  where,
-  limit,
-  orderBy,
-  Timestamp,
-  serverTimestamp,
-  startAfter,
-  updateDoc,
-  deleteDoc,
-} from "firebase/firestore";
+import { collection, getDocs, addDoc, query, where } from "firebase/firestore";
 
-import { db, auth } from "../utils/firebase";
+import { getAuth } from "firebase/auth";
+import { db, app } from "./firestore";
+
+const auth = getAuth(app);
 
 const googleProvider = new GoogleAuthProvider();
 const signInWithGoogle = async () => {

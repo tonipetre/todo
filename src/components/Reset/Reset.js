@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import "./reset.css";
 
-import { auth, sendPasswordReset } from "../../services/FirebaseAuth";
+import { auth, sendPasswordReset } from "../../services/auth";
 
 function Reset() {
   const [email, setEmail] = useState("");

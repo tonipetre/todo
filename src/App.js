@@ -1,6 +1,4 @@
 import "./App.css";
-import { useEffect, useState } from "react";
-import FirebaseService from "./services/FirebaseService";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
 import Login from "./components/Login/Login";

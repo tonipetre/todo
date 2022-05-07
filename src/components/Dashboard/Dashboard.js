@@ -1,30 +1,16 @@
 import { useEffect, useState } from "react";
-import FirebaseService from "../../services/FirebaseService";
 import "./dashboard.css";
+import FirestoreService from "../../services/firestore";
 
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useNavigate } from "react-router-dom";
-import { auth } from "../../utils/firebase";
-import { logout } from "../../services/FirebaseAuth";
-
-import {
-  collection,
-  onSnapshot,
-  query,
-  where,
-  orderBy,
-} from "firebase/firestore";
-import { db } from "../../utils/firebase";
-import { COLLECTION_REF } from "../../services/Constants";
+import { auth, logout } from "../../services/auth";
 
 function Dashboard() {
   const [todos, setTodos] = useState([]);
   const [input, setInput] = useState("");
   const [toggleEditById, setToggleEditById] = useState("");
   const [editInput, setEditInput] = useState("");
-
-  const [lastDocument, setLastDocument] = useState("");
-  const [nextPosts_loading, setNextPostsLoading] = useState(false);
 
   const [user, loading, error] = useAuthState(auth);
   const [name, setName] = useState("");
@@ -37,19 +23,6 @@ function Dashboard() {
   //     .then((res) => {
   //       setTodos(res.todos);
   //       setLastDocument(res.lastDocument);
-  //     })
-  //     .catch((err) => {
-  //       console.log(err);
-  //     });
-  // }, [user, loading]);
-
-  // useEffect(() => {
-  //   if (loading) return;
-  //   FirebaseService.listenToUpdates(user)
-  //     .then((res) => {
-  //       console.log("res", res.todos);
-  //       setTodos(res.todos);
-  //       // setLastDocument(res.lastDocument);
   //     })
   //     .catch((err) => {
   //       console.log(err);
@@ -80,37 +53,28 @@ function Dashboard() {
 
   useEffect(() => {
     if (loading) return;
-
-    const { todos, unsubscribe } = FirebaseService.listenToUpdates(user);
-    setTodos(todos);
-
-    console.log("todos in useEffect", todos);
-
-    console.log("todos in useEffect length", todos.length);
-
-    // return () => unsubscribe();
+    const unsubscribe = FirestoreService.listenToUpdates(
+      user,
+      (querySnapshot) => {
+        const todos = querySnapshot.docs.map((docSnapshot) => {
+          return {
+            id: docSnapshot.id,
+            ...docSnapshot.data(),
+          };
+        });
+        setTodos(todos);
+        console.log(todos);
+      },
+      // (error) => setError("grocery-list-item-get-fail")
+      (error) => console.log(error)
+    );
+    return unsubscribe;
   }, [user, loading]);
-
-  // const fetchMorePosts = () => {
-  //   if (lastDocument) {
-  //     setNextPostsLoading(true);
-  //     FirebaseService.getNextBatch(lastDocument, user)
-  //       .then((res) => {
-  //         setLastDocument(res.lastDocument);
-  //         setTodos([...todos, ...res.todos]);
-  //         setNextPostsLoading(false);
-  //       })
-  //       .catch((err) => {
-  //         console.log(err);
-  //         setNextPostsLoading(false);
-  //       });
-  //   }
-  // };
 
   const handleAddTodo = (event) => {
     event.preventDefault();
     if (input) {
-      FirebaseService.createDocument(input, user)
+      FirestoreService.createDocument(input, user)
         .then((res) => setTodos([res.newDocument, ...todos]))
         .then(() => setInput(""))
         .then(console.log(todos));
@@ -119,7 +83,7 @@ function Dashboard() {
   };
 
   const handleDeleteTodo = (id) => {
-    FirebaseService.deleteDocument(id).then(() =>
+    FirestoreService.deleteDocument(id).then(() =>
       setTodos(todos.filter((todo) => todo.id !== id))
     );
   };
@@ -131,7 +95,7 @@ function Dashboard() {
       text: document.text,
     };
 
-    FirebaseService.updateDocument(id, updatedDocument).then(() => {
+    FirestoreService.updateDocument(id, updatedDocument).then(() => {
       const updatedTodos = todos.map((todo) => {
         if (todo.id === id) {
           const updatedTodo = {
@@ -163,7 +127,7 @@ function Dashboard() {
       text: editInput,
     };
 
-    FirebaseService.updateDocument(id, updatedDocument)
+    FirestoreService.updateDocument(id, updatedDocument)
       .then(() => {
         const updatedTodos = todos.map((todo) => {
           if (todo.id === id) {

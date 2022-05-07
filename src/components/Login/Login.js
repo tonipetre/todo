@@ -3,12 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuthState } from "react-firebase-hooks/auth";
 import "./login.css";
 
-// import { auth } from "../../utils/firebase";
 import {
   auth,
   logInWithEmailAndPassword,
   signInWithGoogle,
-} from "../../services/FirebaseAuth";
+} from "../../services/auth";
 
 function Login() {
   const [email, setEmail] = useState("");
