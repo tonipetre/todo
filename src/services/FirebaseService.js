@@ -21,41 +21,23 @@ import {
 import { COLLECTION_REF } from "./Constants";
 
 export default {
-  listenToUpdates: async function (user) {
-    // if (user) {
-    //   const q = query(
-    //     collection(COLLECTION_REF),
-    //     where("author", "==", user.uid),
-    //     orderBy("createdAt", "desc")
-    //   );
-    //   let todos;
-    //   const listenToUpdatesUnsubscribe = onSnapshot(q, (querySnapshot) => {
-    //     if (querySnapshot.exists()) {
-    //       console.log(querySnapshot.data());
-    //       const docData = querySnapshot.data();
-    //       console.log(JSON.stringify(docData));
-    //       todos = docData.docs.map((doc) => {
-    //         return {
-    //           id: doc.id,
-    //           ...doc.data(),
-    //         };
-    //       });
-    //     }
-    //   });
-    //   return { listenToUpdatesUnsubscribe, todos };
-    // }
-    // const q = query(collection(db, "todos"));
-    // let todos = [];
-    // let listenToUpdatesUnsubscribe = onSnapshot(q, (querySnapshot) => {
-    //   const data = querySnapshot.docs.map((doc) => {
-    //     return {
-    //       id: doc.id,
-    //       ...doc.data(),
-    //     };
-    //   });
-    // });
-    // console.log("todos", todos);
-    // return { todos };
+  listenToUpdates: function (user) {
+    const q = query(collection(db, "todos"));
+
+    let todos = [];
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const todo = querySnapshot.docs.map((doc) => {
+        return {
+          id: doc.id,
+          ...doc.data(),
+        };
+      });
+      todos.push(...todo);
+    });
+
+    console.log("todos", todos);
+
+    return { todos, unsubscribe };
   },
   getFirstBatch: async function (user) {
     console.log(user);

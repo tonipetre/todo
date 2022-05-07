@@ -56,26 +56,39 @@ function Dashboard() {
   //     });
   // }, [user, loading]);
 
+  // useEffect(() => {
+  //   if (loading) return;
+
+  //   const q = query(
+  //     COLLECTION_REF,
+  //     where("author", "==", user.uid),
+  //     orderBy("createdAt", "desc")
+  //   );
+
+  //   const unsubscribe = onSnapshot(q, (querySnapshot) => {
+  //     const data = querySnapshot.docs.map((doc) => {
+  //       return {
+  //         id: doc.id,
+  //         ...doc.data(),
+  //       };
+  //     });
+  //     setTodos(data);
+  //   });
+
+  //   return () => unsubscribe();
+  // }, [user, loading]);
+
   useEffect(() => {
     if (loading) return;
 
-    const q = query(
-      COLLECTION_REF,
-      where("author", "==", user.uid),
-      orderBy("createdAt", "desc")
-    );
+    const { todos, unsubscribe } = FirebaseService.listenToUpdates(user);
+    setTodos(todos);
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const data = querySnapshot.docs.map((doc) => {
-        return {
-          id: doc.id,
-          ...doc.data(),
-        };
-      });
-      setTodos(data);
-    });
+    console.log("todos in useEffect", todos);
 
-    return () => unsubscribe();
+    console.log("todos in useEffect length", todos.length);
+
+    // return () => unsubscribe();
   }, [user, loading]);
 
   // const fetchMorePosts = () => {
