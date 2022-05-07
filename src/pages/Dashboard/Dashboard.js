@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import "./dashboard.css";
 import FirestoreService from "../../services/firestore";
 
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useNavigate } from "react-router-dom";
 import { auth, logout } from "../../services/auth";
+import TodoItem from "../../components/Todo";
 
 function Dashboard() {
   const [todos, setTodos] = useState([]);
@@ -63,7 +64,6 @@ function Dashboard() {
           };
         });
         setTodos(todos);
-        console.log(todos);
       },
       // (error) => setError("grocery-list-item-get-fail")
       (error) => console.log(error)
@@ -71,78 +71,96 @@ function Dashboard() {
     return unsubscribe;
   }, [user, loading]);
 
-  const handleAddTodo = (event) => {
-    event.preventDefault();
-    if (input) {
-      FirestoreService.createDocument(input, user)
-        .then((res) => setTodos([res.newDocument, ...todos]))
-        .then(() => setInput(""))
-        .then(console.log(todos));
-    }
-    console.log("todos", todos);
-  };
+  useEffect(() => {
+    if (loading) return;
+    if (!user) return navigate("/");
+  }, [user, loading]);
 
-  const handleDeleteTodo = (id) => {
-    FirestoreService.deleteDocument(id).then(() =>
-      setTodos(todos.filter((todo) => todo.id !== id))
-    );
-  };
+  const handleAddTodo = useCallback(
+    (event) => {
+      event.preventDefault();
+      if (input) {
+        FirestoreService.createDocument(input, user)
+          .then((res) => setTodos([res.newDocument, ...todos]))
+          .then(() => setInput(""));
+      }
+    },
+    [input]
+  );
 
-  const handleToggleComplete = (id) => {
-    const document = todos.find((todo) => todo.id === id);
-    const updatedDocument = {
-      checked: !document.checked,
-      text: document.text,
-    };
+  const handleDeleteTodo = useCallback(
+    (id) => {
+      FirestoreService.deleteDocument(id).then(() =>
+        setTodos(todos.filter((todo) => todo.id !== id))
+      );
+    },
+    [todos]
+  );
 
-    FirestoreService.updateDocument(id, updatedDocument).then(() => {
-      const updatedTodos = todos.map((todo) => {
-        if (todo.id === id) {
-          const updatedTodo = {
-            ...todo,
-            checked: !todo.checked,
-          };
-          return updatedTodo;
-        }
-        return todo;
-      });
-      setTodos(updatedTodos);
-    });
-  };
+  const handleToggleComplete = useCallback(
+    (id) => {
+      const document = todos.find((todo) => todo.id === id);
+      const updatedDocument = {
+        checked: !document.checked,
+        text: document.text,
+      };
 
-  const handleEditTodo = (id) => {
-    setToggleEditById(id);
-
-    const editTodo = todos.find((todo) => todo.id === id);
-    setEditInput(editTodo.text);
-  };
-
-  const handleSaveTodo = (event) => {
-    event.preventDefault();
-    const id = toggleEditById;
-    const document = todos.find((todo) => todo.id === id);
-
-    const updatedDocument = {
-      checked: document.checked,
-      text: editInput,
-    };
-
-    FirestoreService.updateDocument(id, updatedDocument)
-      .then(() => {
+      FirestoreService.updateDocument(id, updatedDocument).then(() => {
         const updatedTodos = todos.map((todo) => {
           if (todo.id === id) {
             const updatedTodo = {
               ...todo,
-              text: editInput,
+              checked: !todo.checked,
             };
             return updatedTodo;
           }
           return todo;
         });
         setTodos(updatedTodos);
-      })
-      .then(() => handleResetEdit());
-  };
+      });
+    },
+    [todos]
+  );
+
+  const handleEditTodo = useCallback(
+    (id) => {
+      setToggleEditById(id);
+
+      const editTodo = todos.find((todo) => todo.id === id);
+      setEditInput(editTodo.text);
+    },
+    [todos]
+  );
+
+  const handleSaveTodo = useCallback(
+    (event) => {
+      event.preventDefault();
+      const id = toggleEditById;
+      const document = todos.find((todo) => todo.id === id);
+
+      const updatedDocument = {
+        checked: document.checked,
+        text: editInput,
+      };
+
+      FirestoreService.updateDocument(id, updatedDocument)
+        .then(() => {
+          const updatedTodos = todos.map((todo) => {
+            if (todo.id === id) {
+              const updatedTodo = {
+                ...todo,
+                text: editInput,
+              };
+              return updatedTodo;
+            }
+            return todo;
+          });
+          setTodos(updatedTodos);
+        })
+        .then(() => handleResetEdit());
+    },
+    [todos, toggleEditById, editInput]
+  );
 
   const handleResetEdit = () => {
     setToggleEditById("");
@@ -167,46 +185,18 @@ function Dashboard() {
       )}
       {todos.map((todo) => {
         return (
-          <div key={todo.id}>
-            <p
-              style={{
-                textDecoration: todo.checked ? "line-through" : "none",
-              }}
-            >
-              {todo.text}
-            </p>
-            <button type="button" onClick={() => handleToggleComplete(todo.id)}>
-              Toggle
-            </button>
-            <button type="button" onClick={() => handleEditTodo(todo.id)}>
-              Edit
-            </button>
-            <button type="button" onClick={() => handleDeleteTodo(todo.id)}>
-              X
-            </button>
-          </div>
+          <TodoItem
+            key={todo.id}
+            todo={todo}
+            handleToggleComplete={handleToggleComplete}
+            handleEditTodo={handleEditTodo}
+            handleDeleteTodo={handleDeleteTodo}
+          />
         );
       })}
+      {todos.length <= 0 && <p>There are no todos</p>}
     </>
   );
-
-  // const fetchUserName = async () => {
-  //   try {
-  //     const q = query(collection(db, "users"), where("uid", "==", user?.uid));
-  //     const doc = await getDocs(q);
-  //     const data = doc.docs[0].data();
-  //     setName(data.name);
-  //   } catch (err) {
-  //     console.error(err);
-  //     alert("An error occured while fetching user data");
-  //   }
-  // };
-
-  useEffect(() => {
-    if (loading) return;
-    if (!user) return navigate("/");
-    // fetchUserName();
-  }, [user, loading]);
 
   return (
     <div className="App">
